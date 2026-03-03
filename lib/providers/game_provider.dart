@@ -5,8 +5,10 @@ import '../data/levels.dart';
 
 class GameProvider extends ChangeNotifier {
   GameState _state = GameState();
+  int _highScore = 0; // เก็บคะแนนสูงสุด
 
   GameState get state => _state;
+  int get highScore => _highScore;
 
   void selectSound(SoundType type) {
     _state = _state.copyWith(
@@ -38,6 +40,10 @@ class GameProvider extends ChangeNotifier {
   }
 
   void resetGame() {
+    // บันทึก highScore ก่อน reset
+    if (_state.score > _highScore) {
+      _highScore = _state.score;
+    }
     _state = GameState();
     notifyListeners();
   }
@@ -45,7 +51,6 @@ class GameProvider extends ChangeNotifier {
   int calculateScore(List<EqBand> answer, List<EqBand> userAnswer) {
     if (answer.length != userAnswer.length) return 0;
 
-    // ดึง filterType ของ level ปัจจุบัน
     final levels = Levels.getLevels(_state.selectedSound);
     final currentLevel = levels[_state.currentLevel - 1];
     final filterType = currentLevel.filterType;
@@ -56,11 +61,8 @@ class GameProvider extends ChangeNotifier {
       double freqError = (answer[i].frequency - userAnswer[i].frequency).abs();
 
       if (filterType == 'lowpass' || filterType == 'highpass') {
-        // Low/High Pass คิดแค่ frequency อย่างเดียว
-        // ถ้าต่างกันไม่เกิน 100Hz ถือว่าเกือบถูก
         totalError += freqError / 500;
       } else {
-        // Bell และ Multi คิดทั้ง frequency และ gain
         double gainError = (answer[i].gain - userAnswer[i].gain).abs();
         totalError += freqError / 1000 + gainError / 12;
       }

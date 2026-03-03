@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:math';
 import '../providers/game_provider.dart';
 import '../models/eq_band.dart';
 import '../data/levels.dart';
@@ -17,6 +18,7 @@ class GameScreen extends StatefulWidget {
 class _GameScreenState extends State<GameScreen> {
   late List<EqBand> _userBands;
   bool _showAnswer = false;
+  final Random _random = Random();
 
   @override
   void initState() {
@@ -27,14 +29,40 @@ class _GameScreenState extends State<GameScreen> {
   void _initUserBands() {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final currentLevel = _getCurrentLevel(gameProvider);
+    final filterType = currentLevel.filterType;
 
     setState(() {
       _userBands = List<EqBand>.from(
         currentLevel.answer.map((band) {
+          final b = band as EqBand;
+
+          double randomFreq;
+          double randomGain;
+
+          if (filterType == 'lowpass' || filterType == 'highpass') {
+            // สุ่ม frequency ให้ห่างจาก answer อย่างน้อย 2 octave
+            final freqOptions = [50.0, 100.0, 200.0, 500.0, 1000.0, 2000.0, 5000.0, 10000.0];
+            freqOptions.removeWhere((f) => (f - b.frequency).abs() < b.frequency * 0.5);
+            randomFreq = freqOptions[_random.nextInt(freqOptions.length)];
+            randomGain = 0;
+          } else {
+            // Bell — สุ่มทั้ง frequency และ gain
+            final freqOptions = [100.0, 200.0, 500.0, 1000.0, 2000.0, 5000.0, 8000.0];
+            freqOptions.removeWhere((f) => (f - b.frequency).abs() < b.frequency * 0.3);
+            randomFreq = freqOptions[_random.nextInt(freqOptions.length)];
+
+            // สุ่ม gain ให้ต่างจาก answer อย่างน้อย 4dB
+            double gain;
+            do {
+              gain = (_random.nextDouble() * 24 - 12);
+            } while ((gain - b.gain).abs() < 4);
+            randomGain = gain;
+          }
+
           return EqBand(
-            frequency: (band as EqBand).frequency,
-            gain: 0,
-            q: band.q,
+            frequency: randomFreq,
+            gain: randomGain,
+            q: b.q,
           );
         }).toList(),
       );
@@ -180,7 +208,6 @@ class _GameScreenState extends State<GameScreen> {
 
             const SizedBox(height: 16),
 
-            // ปุ่มเล่นเสียง 2 ปุ่ม
             DualAudioPlayer(
               key: ValueKey(gameProvider.state.currentLevel),
               questionPath: currentLevel.audioQuestion,
