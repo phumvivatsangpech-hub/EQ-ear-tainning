@@ -9,61 +9,72 @@ class AudioService extends ChangeNotifier {
   AudioService._internal();
 
   SoLoud? _soloud;
-  SoundHandle? _questionHandle;
-  SoundHandle? _originalHandle;
-  AudioSource? _questionSource;
-  AudioSource? _originalSource;
+  SoundHandle? _audioHandle;
+  AudioSource? _audioSource;
+  AudioData? _audioData;
 
   bool _isInit = false;
   bool _isPlayingOriginal = false;
   bool _isBypassMyEq = false;
   List<EqBand> _currentBands = [];
   String _currentFilterType = 'bell';
+  
+  List<EqBand> _targetBands = [];
+  String _targetFilterType = 'bell';
+
   bool _filtersAdded = false;
 
   bool get isPlayingOriginal => _isPlayingOriginal;
   bool get isBypassMyEq => _isBypassMyEq;
 
+  // New method to fetch FFT
+  List<double> getFft() {
+    if (!_isInit || _soloud == null || _audioHandle == null || _audioData == null) {
+      return List<double>.filled(256, 0.0);
+    }
+    try {
+      _audioData!.updateSamples();
+      return List<double>.generate(256, (i) => _audioData!.getLinearFft(SampleLinear(i)));
+    } catch (e) {
+      return List<double>.filled(256, 0.0);
+    }
+  }
+
   Future<void> init() async {
     if (_isInit) return;
     _soloud = SoLoud.instance;
     await _soloud!.init();
+    _soloud!.setVisualizationEnabled(true);
+    _audioData = AudioData(GetSamplesKind.linear);
     _isInit = true;
   }
 
-  Future<void> loadAudio(String questionPath, String originalPath) async {
+  Future<void> loadAudio(String audioPath) async {
     if (!_isInit) await init();
 
-    // Reset to question track on every new level load
-    _isPlayingOriginal = false;
+    // Reset states
+    _isPlayingOriginal = false; // Start by listening to the problem
     _isBypassMyEq = false;
     _currentBands = [];
 
-    // Clean up previous sources if any
-    await disposeAudio();
+    await disposeAudio(); // Keep lesson tone out of this unless needed
 
     try {
-      _questionSource = await _soloud!.loadAsset(questionPath);
-      _originalSource = await _soloud!.loadAsset(originalPath);
+      _audioSource = await _soloud!.loadAsset(audioPath);
     } catch (e) {
       debugPrint('Error loading audio: $e');
-      throw Exception('Failed to load asset: $questionPath or $originalPath. $e');
+      throw Exception('Failed to load asset: $audioPath. $e');
     }
   }
 
   Future<void> play() async {
-    if (_questionSource == null || _originalSource == null) return;
+    if (_audioSource == null) return;
 
     try {
-      // Pause if already playing to restart or swap
-      if (_questionHandle != null) _soloud!.stop(_questionHandle!);
-      if (_originalHandle != null) _soloud!.stop(_originalHandle!);
-
-      if (_isPlayingOriginal) {
-        _originalHandle = await _soloud!.play(_originalSource!, looping: true);
-      } else {
-        _questionHandle = await _soloud!.play(_questionSource!, looping: true);
+      if (_audioHandle == null) {
+        _audioHandle = await _soloud!.play(_audioSource!, looping: true);
       }
+      _applyCurrentState();
     } catch (e) {
       debugPrint('Error playing audio: $e');
     }
@@ -72,47 +83,35 @@ class AudioService extends ChangeNotifier {
   Future<void> toggleOriginal() async {
     if (!_isInit) return;
     _isPlayingOriginal = !_isPlayingOriginal;
-
-    if (!_isPlayingOriginal || _isBypassMyEq) { // "โจทย์" (Problem) is playing or Bypass EQ is enabled, bypass EQ
-      if (_filtersAdded) {
-        // Bypass both filters by setting Wet to 0
-        _soloud!.setFilterParameter(FilterType.biquadResonantFilter, 0, 0.0);
-        _soloud!.setFilterParameter(FilterType.eqFilter, 0, 0.0);
-      }
-    } else { // "ของฉัน" (My EQ) is playing and NOT bypassed, apply EQ
-      if (_currentBands.isNotEmpty) {
-        updateEqBands(_currentBands, _currentFilterType);
-      }
-    }
-
-    await play(); // Re-trigger play to swap sources
+    _applyCurrentState();
     notifyListeners();
   }
 
   Future<void> toggleBypassMyEq() async {
     if (!_isInit) return;
     _isBypassMyEq = !_isBypassMyEq;
-    
-    if (_isPlayingOriginal) {
-      if (_isBypassMyEq) {
-        if (_filtersAdded) {
-          _soloud!.setFilterParameter(FilterType.biquadResonantFilter, 0, 0.0);
-          _soloud!.setFilterParameter(FilterType.eqFilter, 0, 0.0);
-        }
-      } else {
-        if (_currentBands.isNotEmpty) {
-          updateEqBands(_currentBands, _currentFilterType);
-        }
-      }
-    }
+    _applyCurrentState();
     notifyListeners();
+  }
+
+  void updateTargetBands(List<EqBand> bands, String filterType) {
+    _targetBands = bands;
+    _targetFilterType = filterType;
+    if (!_isPlayingOriginal) {
+      _applyCurrentState();
+    }
   }
 
   void updateEqBands(List<EqBand> bands, String filterType) {
     _currentBands = bands;
     _currentFilterType = filterType;
+    if (_isPlayingOriginal && !_isBypassMyEq) {
+      _applyCurrentState();
+    }
+  }
 
-    if (!_isInit || _questionHandle == null) return;
+  void _applyCurrentState() {
+    if (!_isInit || _audioHandle == null) return;
 
     if (!_filtersAdded) {
       try {
@@ -124,12 +123,21 @@ class AudioService extends ChangeNotifier {
       }
     }
 
-    // If playing "โจทย์" (Problem) or Bypass EQ is enabled, ensure bypassed (flat)
-    if (!_isPlayingOriginal || _isBypassMyEq) {
+    if (!_isPlayingOriginal) {
+      // Listen to Target (Problem)
+      _applyFilters(_targetBands, _targetFilterType);
+    } else if (_isPlayingOriginal && _isBypassMyEq) {
+      // Listen Mine Bypass (Flat / Wet=0)
       _soloud!.setFilterParameter(FilterType.biquadResonantFilter, 0, 0.0);
       _soloud!.setFilterParameter(FilterType.eqFilter, 0, 0.0);
-      return;
+    } else {
+      // Listen Mine (User EQ)
+      _applyFilters(_currentBands, _currentFilterType);
     }
+  }
+
+  void _applyFilters(List<EqBand> bands, String filterType) {
+    if (bands.isEmpty) return;
 
     bool isBiquad = (filterType == 'lowpass' || filterType == 'highpass');
     
@@ -192,7 +200,7 @@ class AudioService extends ChangeNotifier {
     stopLessonTone();
 
     try {
-      _lessonSource ??= await _soloud!.loadAsset('assets/audio/music/music_problem_1.mp3');
+      _lessonSource ??= await _soloud!.loadAsset('assets/audio/music/level1_original.mp3');
       
       // Apply Bandpass filter
       if (!_filtersAdded) {
@@ -226,15 +234,17 @@ class AudioService extends ChangeNotifier {
 
   Future<void> disposeAudio() async {
     stopLessonTone();
-    if (_questionHandle != null) _soloud?.stop(_questionHandle!);
-    if (_originalHandle != null) _soloud?.stop(_originalHandle!);
-    if (_questionSource != null) await _soloud?.disposeSource(_questionSource!);
-    if (_originalSource != null) await _soloud?.disposeSource(_originalSource!);
+    if (_audioHandle != null) _soloud?.stop(_audioHandle!);
+    if (_audioSource != null) await _soloud?.disposeSource(_audioSource!);
     if (_lessonSource != null) await _soloud?.disposeSource(_lessonSource!);
-    _questionHandle = null;
-    _originalHandle = null;
-    _questionSource = null;
-    _originalSource = null;
+    _audioHandle = null;
+    _audioSource = null;
     _lessonSource = null;
+  }
+
+  @override
+  void dispose() {
+    _audioData?.dispose();
+    super.dispose();
   }
 }

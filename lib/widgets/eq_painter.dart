@@ -5,12 +5,14 @@ import 'dart:math';
 class EqPainter extends CustomPainter {
   final List<EqBand> bands;
   final List<EqBand>? answerBands;
+  final List<double>? fftData;
   final Size size;
   final String filterType;
 
   EqPainter({
     required this.bands,
     this.answerBands,
+    this.fftData,
     required this.size,
     this.filterType = 'bell',
   });
@@ -84,6 +86,10 @@ class EqPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     _drawGrid(canvas, size);
     _drawLabels(canvas, size);
+    
+    if (fftData != null) {
+      _drawSpectrum(canvas, size);
+    }
 
     if (answerBands != null) {
       // Draw Answer Background
@@ -98,6 +104,71 @@ class EqPainter extends CustomPainter {
       _drawCurve(canvas, size, bands, Colors.yellow, 2);
       _drawNodes(canvas, size, bands, Colors.orange, true);
     }
+  }
+
+  void _drawSpectrum(Canvas canvas, Size size) {
+    if (fftData == null || fftData!.isEmpty) return;
+
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.bottomCenter,
+        end: Alignment.topCenter,
+        colors: [
+          Colors.blue.withOpacity(0.0),
+          Colors.blue.withOpacity(0.1),
+          Colors.blue.withOpacity(0.3),
+        ],
+        stops: const [0.0, 0.4, 1.0],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    path.moveTo(0, size.height);
+
+    const int points = 120;
+    for (int i = 0; i <= points; i++) {
+      double x = (i / points) * size.width;
+      double freq = xToFreq(x, size.width);
+      
+      // Nyquist is around 22050 usually.
+      double binIndex = (freq / 22050.0) * 256.0;
+      int idx = binIndex.floor().clamp(0, 255);
+      int nextIdx = (idx + 1).clamp(0, 255);
+      double fraction = binIndex - idx;
+      
+      double val = fftData![idx] * (1 - fraction) + (fftData!.length > nextIdx ? fftData![nextIdx] : fftData![idx]) * fraction;
+      
+      // FFT values can be boosted for visualization
+      double scaledHeight = val * size.height * 2.5; 
+      double y = size.height - scaledHeight.clamp(0, size.height);
+      
+      path.lineTo(x, y);
+    }
+
+    path.lineTo(size.width, size.height);
+    path.close();
+    canvas.drawPath(path, paint);
+
+    // Subtle outline for the spectrum
+    final linePaint = Paint()
+      ..color = Colors.blueAccent.withOpacity(0.4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    
+    final linePath = Path();
+    for (int i = 0; i <= points; i++) {
+      double x = (i / points) * size.width;
+      double freq = xToFreq(x, size.width);
+      double binIndex = (freq / 22050.0) * 256.0;
+      int idx = binIndex.floor().clamp(0, 255);
+      int nextIdx = (idx + 1).clamp(0, 255);
+      double fraction = binIndex - idx;
+      double val = fftData![idx] * (1 - fraction) + (fftData!.length > nextIdx ? fftData![nextIdx] : fftData![idx]) * fraction;
+      double scaledHeight = val * size.height * 2.5;
+      double y = size.height - scaledHeight.clamp(0, size.height);
+      if (i == 0) linePath.moveTo(x, y); else linePath.lineTo(x, y);
+    }
+    canvas.drawPath(linePath, linePaint);
   }
 
   void _drawGrid(Canvas canvas, Size size) {

@@ -79,9 +79,9 @@ class Translations {
       'th': 'กำลังเล่น: ของฉัน (EQ)',
       'en': 'Playing: Mine (EQ)',
     },
-    'playing_original': {
+    'playing_problem': {
       'th': 'กำลังเล่น: โจทย์',
-      'en': 'Playing: Original Problem',
+      'en': 'Playing: Problem',
     },
     'btn_back_to_problem': {
       'th': 'กลับไปฟังโจทย์',

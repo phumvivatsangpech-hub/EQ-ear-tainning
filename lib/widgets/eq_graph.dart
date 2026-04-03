@@ -24,8 +24,34 @@ class EqGraph extends StatefulWidget {
   State<EqGraph> createState() => _EqGraphState();
 }
 
-class _EqGraphState extends State<EqGraph> {
+class _EqGraphState extends State<EqGraph> with SingleTickerProviderStateMixin {
   int? _draggingIndex;
+  List<double>? _fftData;
+  late final _ticker = createTicker(_onTick);
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker.start();
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    super.dispose();
+  }
+
+  void _onTick(Duration elapsed) {
+    if (!mounted) return;
+    final newData = AudioService().getFft();
+    // Only update if playing (some values > 0) or if we need to clear
+    bool hasData = newData.any((v) => v > 0);
+    if (hasData || _fftData != null) {
+      setState(() {
+        _fftData = newData;
+      });
+    }
+  }
 
   // คำนวณตำแหน่ง Y ของ node ให้ตรงกับที่วาดใน EqPainter
   double _getNodeY(EqBand band, Size size) {
@@ -46,7 +72,7 @@ class _EqGraphState extends State<EqGraph> {
       double logMax = log(20000);
       double nodeX = (log(band.frequency) - logMin) /
                      (logMax - logMin) * size.width;
-      double nodeY = _getNodeY(band, size); // ใช้ตำแหน่ง Y ที่ถูกต้อง
+      double nodeY = _getNodeY(band, size); 
 
       double distance = sqrt(
         pow(position.dx - nodeX, 2) + pow(position.dy - nodeY, 2)
@@ -83,7 +109,6 @@ class _EqGraphState extends State<EqGraph> {
                     });
                   }
                 : null,
-
             onPanUpdate: widget.interactive
                 ? (details) {
                     if (_draggingIndex == null) return;
@@ -100,7 +125,6 @@ class _EqGraphState extends State<EqGraph> {
                         size.height,
                       );
 
-                      // Low/High Pass ลากได้แค่แนวนอน (frequency เท่านั้น)
                       if (widget.filterType == 'lowpass' ||
                           widget.filterType == 'highpass') {
                         newBands[_draggingIndex!] = newBands[_draggingIndex!]
@@ -118,7 +142,6 @@ class _EqGraphState extends State<EqGraph> {
                     });
                   }
                 : null,
-
             onPanEnd: widget.interactive
                 ? (details) {
                     setState(() {
@@ -126,11 +149,11 @@ class _EqGraphState extends State<EqGraph> {
                     });
                   }
                 : null,
-
             child: CustomPaint(
               painter: EqPainter(
                 bands: widget.bands,
                 answerBands: widget.answerBands,
+                fftData: _fftData,
                 size: size,
                 filterType: widget.filterType,
               ),

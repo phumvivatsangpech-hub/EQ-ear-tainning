@@ -5,12 +5,10 @@ import '../utils/translations.dart';
 import '../services/audio_service.dart';
 
 class DualAudioPlayer extends StatefulWidget {
-  final String questionPath;
   final String originalPath;
 
   const DualAudioPlayer({
     Key? key,
-    required this.questionPath,
     required this.originalPath,
   }) : super(key: key);
 
@@ -35,7 +33,7 @@ class _DualAudioPlayerState extends State<DualAudioPlayer> {
     try {
       if (mounted) setState(() { _isLoading = true; _errorMessage = null; });
       await _audioService.init();
-      await _audioService.loadAudio(widget.questionPath, widget.originalPath);
+      await _audioService.loadAudio(widget.originalPath);
       await _audioService.play();
     } catch (e) {
       debugPrint('Audio Setup Error: $e');
@@ -122,7 +120,7 @@ class _DualAudioPlayerState extends State<DualAudioPlayer> {
               Text(
                 isPlayingOriginal
                     ? (isBypassMyEq ? Translations.get('playing_my_eq_bypass', isThai) : Translations.get('playing_my_eq', isThai))
-                    : Translations.get('playing_original', isThai),
+                    : Translations.get('playing_problem', isThai),
                 style: TextStyle(
                   color: isPlayingOriginal ? Colors.orange : Colors.blue,
                   fontSize: 13,

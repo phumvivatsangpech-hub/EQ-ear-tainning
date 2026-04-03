@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/game_state.dart';
 import '../models/eq_band.dart';
-import '../data/levels.dart';
 
 class GameProvider extends ChangeNotifier {
   GameState _state = GameState();
@@ -58,12 +57,8 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  int calculateScore(List<EqBand> answer, List<EqBand> userAnswer) {
+  int calculateScore(List<EqBand> answer, List<EqBand> userAnswer, String filterType) {
     if (answer.length != userAnswer.length) return 0;
-
-    final levels = Levels.getLevels(_state.selectedSound);
-    final currentLevel = levels[_state.currentLevel - 1];
-    final filterType = currentLevel.filterType;
 
     double totalError = 0;
 
