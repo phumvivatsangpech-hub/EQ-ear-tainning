@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../models/eq_band.dart';
+import '../services/audio_service.dart';
 import 'eq_painter.dart';
 import 'dart:math';
 
 class EqGraph extends StatefulWidget {
   final List<EqBand> bands;
+  final List<EqBand>? answerBands;
   final Function(List<EqBand>) onBandsChanged;
   final bool interactive;
   final String filterType;
@@ -12,6 +14,7 @@ class EqGraph extends StatefulWidget {
   const EqGraph({
     Key? key,
     required this.bands,
+    this.answerBands,
     required this.onBandsChanged,
     this.interactive = true,
     this.filterType = 'bell',
@@ -111,6 +114,7 @@ class _EqGraphState extends State<EqGraph> {
                       }
 
                       widget.onBandsChanged(newBands);
+                      AudioService().updateEqBands(newBands, widget.filterType);
                     });
                   }
                 : null,
@@ -126,6 +130,7 @@ class _EqGraphState extends State<EqGraph> {
             child: CustomPaint(
               painter: EqPainter(
                 bands: widget.bands,
+                answerBands: widget.answerBands,
                 size: size,
                 filterType: widget.filterType,
               ),

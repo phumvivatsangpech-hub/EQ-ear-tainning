@@ -4,11 +4,13 @@ import 'dart:math';
 
 class EqPainter extends CustomPainter {
   final List<EqBand> bands;
+  final List<EqBand>? answerBands;
   final Size size;
   final String filterType;
 
   EqPainter({
     required this.bands,
+    this.answerBands,
     required this.size,
     this.filterType = 'bell',
   });
@@ -35,10 +37,10 @@ class EqPainter extends CustomPainter {
     return ((1 - y / height) * 24 - 12).clamp(-12.0, 12.0);
   }
 
-  double _calculateTotalGain(double freq) {
+  double _calculateTotalGain(double freq, List<EqBand> targetBands) {
     double totalGain = 0;
 
-    for (EqBand band in bands) {
+    for (EqBand band in targetBands) {
       switch (filterType) {
         case 'lowpass':
           double ratio = freq / band.frequency;
@@ -82,8 +84,20 @@ class EqPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     _drawGrid(canvas, size);
     _drawLabels(canvas, size);
-    _drawCurve(canvas, size);
-    _drawNodes(canvas, size);
+
+    if (answerBands != null) {
+      // Draw Answer Background
+      _drawCurve(canvas, size, answerBands!, Colors.greenAccent, 3);
+      _drawNodes(canvas, size, answerBands!, Colors.green, true);
+      
+      // Draw User Answer (dimmed slightly)
+      _drawCurve(canvas, size, bands, Colors.yellow.withOpacity(0.5), 2);
+      _drawNodes(canvas, size, bands, Colors.orange.withOpacity(0.5), false);
+    } else {
+      // Normal state
+      _drawCurve(canvas, size, bands, Colors.yellow, 2);
+      _drawNodes(canvas, size, bands, Colors.orange, true);
+    }
   }
 
   void _drawGrid(Canvas canvas, Size size) {
@@ -145,10 +159,10 @@ class EqPainter extends CustomPainter {
     });
   }
 
-  void _drawCurve(Canvas canvas, Size size) {
+  void _drawCurve(Canvas canvas, Size size, List<EqBand> targetBands, Color color, double strokeWidth) {
     final paint = Paint()
-      ..color = Colors.yellow
-      ..strokeWidth = 2
+      ..color = color
+      ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke;
 
     final path = Path();
@@ -156,7 +170,7 @@ class EqPainter extends CustomPainter {
 
     for (double x = 0; x <= size.width; x += 1) {
       double freq = xToFreq(x, size.width);
-      double totalGain = _calculateTotalGain(freq);
+      double totalGain = _calculateTotalGain(freq, targetBands);
       double y = gainToY(totalGain);
 
       if (!started) {
@@ -170,8 +184,8 @@ class EqPainter extends CustomPainter {
     canvas.drawPath(path, paint);
   }
 
-  void _drawNodes(Canvas canvas, Size size) {
-    for (EqBand band in bands) {
+  void _drawNodes(Canvas canvas, Size size, List<EqBand> targetBands, Color innerColor, bool drawLabels) {
+    for (EqBand band in targetBands) {
       double x = freqToX(band.frequency);
       double y = _getNodeY(band);
 
@@ -181,54 +195,44 @@ class EqPainter extends CustomPainter {
       canvas.drawCircle(Offset(x, y), 14, outerPaint);
 
       final innerPaint = Paint()
-        ..color = Colors.orange
+        ..color = innerColor
         ..style = PaintingStyle.fill;
       canvas.drawCircle(Offset(x, y), 10, innerPaint);
 
-      // แสดง Hz label เหนือ node
-      String freqLabel = band.frequency >= 1000
-          ? '${(band.frequency / 1000).toStringAsFixed(1)} kHz'
-          : '${band.frequency.toStringAsFixed(0)} Hz';
+      if (drawLabels) {
+        String freqLabel = band.frequency >= 1000
+            ? '${(band.frequency / 1000).toStringAsFixed(1)} kHz'
+            : '${band.frequency.toStringAsFixed(0)} Hz';
 
-      // แสดง dB label สำหรับ bell และ multi
-      String gainLabel = band.gain >= 0
-          ? '+${band.gain.toStringAsFixed(1)} dB'
-          : '${band.gain.toStringAsFixed(1)} dB';
+        String gainLabel = band.gain >= 0
+            ? '+${band.gain.toStringAsFixed(1)} dB'
+            : '${band.gain.toStringAsFixed(1)} dB';
 
-      // แสดง label เหนือ node
-      if (filterType == 'lowpass' || filterType == 'highpass') {
-        _drawText(
-          canvas,
-          freqLabel,
-          Offset(x - 20, y - 30),
-          const TextStyle(
-            color: Colors.white,
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-          ),
-        );
-      } else {
-        // Bell และ Multi แสดงทั้ง Hz และ dB
-        _drawText(
-          canvas,
-          freqLabel,
-          Offset(x - 20, y - 42),
-          const TextStyle(
-            color: Colors.white,
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-          ),
-        );
-        _drawText(
-          canvas,
-          gainLabel,
-          Offset(x - 20, y - 28),
-          TextStyle(
-            color: band.gain >= 0 ? Colors.greenAccent : Colors.redAccent,
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-          ),
-        );
+        if (filterType == 'lowpass' || filterType == 'highpass') {
+          _drawText(
+            canvas,
+            freqLabel,
+            Offset(x - 20, y - 30),
+            const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+          );
+        } else {
+          _drawText(
+            canvas,
+            freqLabel,
+            Offset(x - 20, y - 42),
+            const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+          );
+          _drawText(
+            canvas,
+            gainLabel,
+            Offset(x - 20, y - 28),
+            TextStyle(
+              color: band.gain >= 0 ? Colors.greenAccent : Colors.redAccent,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          );
+        }
       }
     }
   }

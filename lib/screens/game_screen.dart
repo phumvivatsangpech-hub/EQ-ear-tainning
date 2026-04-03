@@ -121,13 +121,21 @@ class _GameScreenState extends State<GameScreen> {
         ),
         actions: [
           TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'ดูเฉลย (กราฟ)',
+              style: TextStyle(color: Colors.orange),
+            ),
+          ),
+          ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               _goNextLevel(gameProvider);
             },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
             child: const Text(
               'Level ถัดไป',
-              style: TextStyle(color: Colors.orange),
+              style: TextStyle(color: Colors.white),
             ),
           ),
         ],
@@ -198,6 +206,7 @@ class _GameScreenState extends State<GameScreen> {
             Expanded(
               child: EqGraph(
                 bands: _userBands,
+                answerBands: _showAnswer ? List<EqBand>.from(currentLevel.answer) : null,
                 onBandsChanged: (newBands) {
                   setState(() => _userBands = newBands);
                 },
@@ -230,6 +239,28 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                   child: const Text(
                     'ยืนยันคำตอบ',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => _goNextLevel(gameProvider),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Level ถัดไป ➡️',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
