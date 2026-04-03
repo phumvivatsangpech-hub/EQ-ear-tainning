@@ -8,8 +8,8 @@ class Translations {
 
     // ---- Home Screen ----
     'app_title': {
-      'th': 'EQ ฝึกหู',
-      'en': 'EQ Ear Training',
+      'th': 'EQ ฝึกหู By 66310045 ITDS',
+      'en': 'Eq Ear Training By 66310045 ITDS',
     },
     'app_subtitle': {
       'th': 'ฝึกทักษะการฟัง EQ',
@@ -162,8 +162,8 @@ class Translations {
       'en': 'Detailed User Manual',
     },
     'manual_welcome': {
-      'th': 'ยินดีต้อนรับสู่ EQ ฝึกหู',
-      'en': 'Welcome to EQ Ear Training',
+      'th': 'ยินดีต้อนรับสู่ Eq Ear Training By 66310045 ITDS',
+      'en': 'Welcome to Eq Ear Training By 66310045 ITDS',
     },
     'manual_desc': {
       'th': 'แอพพลิเคชันฝึกทักษะการฟัง EQ แบบมืออาชีพ',

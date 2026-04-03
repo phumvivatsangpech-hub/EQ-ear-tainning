@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => GameProvider(),
       child: MaterialApp(
-        title: 'EQ Ear Tainning By 66310045',
+        title: 'Eq Ear Training By 66310045 ITDS',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
