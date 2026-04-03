@@ -7,6 +7,8 @@ import '../data/levels.dart';
 import '../widgets/eq_graph.dart';
 import '../widgets/audio_player.dart';
 import 'result_screen.dart';
+import '../widgets/epic_background.dart';
+import '../utils/translations.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -94,22 +96,24 @@ class _GameScreenState extends State<GameScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A2E),
-        title: Text(
-          score >= 80
-              ? '🎉 ยอดเยี่ยม!'
-              : score >= 50
-                  ? '👍 ดีมาก!'
-                  : '💪 ลองใหม่อีกครั้ง!',
-          style: const TextStyle(color: Colors.white),
-          textAlign: TextAlign.center,
-        ),
+      builder: (context) {
+        final isThai = Provider.of<GameProvider>(context, listen: false).isThai;
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1A1A2E),
+          title: Text(
+            score >= 80
+                ? Translations.get('great_job', isThai)
+                : score >= 50
+                    ? Translations.get('very_good', isThai)
+                    : Translations.get('try_again', isThai),
+            style: const TextStyle(color: Colors.white),
+            textAlign: TextAlign.center,
+          ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'คะแนน: $score / 100',
+              '${Translations.get('score_text', isThai)} $score / 100',
               style: const TextStyle(
                 color: Colors.orange,
                 fontSize: 32,
@@ -122,9 +126,9 @@ class _GameScreenState extends State<GameScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'ดูเฉลย (กราฟ)',
-              style: TextStyle(color: Colors.orange),
+            child: Text(
+              Translations.get('btn_view_answer_graph', isThai),
+              style: const TextStyle(color: Colors.orange),
             ),
           ),
           ElevatedButton(
@@ -133,13 +137,14 @@ class _GameScreenState extends State<GameScreen> {
               _goNextLevel(gameProvider);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text(
-              'Level ถัดไป',
-              style: TextStyle(color: Colors.white),
+            child: Text(
+              Translations.get('btn_next_level', isThai).replaceAll(' ➡️', ''),
+              style: const TextStyle(color: Colors.white),
             ),
           ),
         ],
-      ),
+      );
+     },
     );
   }
 
@@ -160,15 +165,18 @@ class _GameScreenState extends State<GameScreen> {
   @override
   Widget build(BuildContext context) {
     final gameProvider = Provider.of<GameProvider>(context);
+    final isThai = gameProvider.isThai;
     final currentLevel = _getCurrentLevel(gameProvider);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF1A1A2E),
-      appBar: AppBar(
+    return EpicBackground(
+      child: Scaffold(
         backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         title: Text(
-          'Level ${gameProvider.state.currentLevel} — ${currentLevel.title}',
+          '${Translations.get('level_prefix', isThai)} ${gameProvider.state.currentLevel} — ${currentLevel.title}',
           style: const TextStyle(color: Colors.white, fontSize: 16),
         ),
         actions: [
@@ -176,7 +184,7 @@ class _GameScreenState extends State<GameScreen> {
             padding: const EdgeInsets.only(right: 16),
             child: Center(
               child: Text(
-                'คะแนน: ${gameProvider.state.score}',
+                '${Translations.get('score_text', isThai)} ${gameProvider.state.score}',
                 style: const TextStyle(color: Colors.orange),
               ),
             ),
@@ -237,9 +245,9 @@ class _GameScreenState extends State<GameScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'ยืนยันคำตอบ',
-                    style: TextStyle(
+                  child: Text(
+                    Translations.get('btn_confirm_answer', isThai),
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -259,9 +267,9 @@ class _GameScreenState extends State<GameScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Level ถัดไป ➡️',
-                    style: TextStyle(
+                  child: Text(
+                    Translations.get('btn_next_level', isThai),
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -272,6 +280,7 @@ class _GameScreenState extends State<GameScreen> {
           ],
         ),
       ),
+     ),
     );
   }
 }

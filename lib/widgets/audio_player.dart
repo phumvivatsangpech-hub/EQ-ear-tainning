@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/game_provider.dart';
+import '../utils/translations.dart';
 import '../services/audio_service.dart';
 
 class DualAudioPlayer extends StatefulWidget {
@@ -59,6 +62,9 @@ class _DualAudioPlayerState extends State<DualAudioPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    final gameProvider = Provider.of<GameProvider>(context);
+    final isThai = gameProvider.isThai;
+
     if (_isLoading) {
       return const Center(
         child: Column(
@@ -92,7 +98,7 @@ class _DualAudioPlayerState extends State<DualAudioPlayer> {
     return Column(
       children: [
         Text(
-          'Original File: ${widget.originalPath.split('/').last}',
+          '${Translations.get('original_file', isThai)} ${widget.originalPath.split('/').last}',
           style: const TextStyle(color: Colors.white70, fontSize: 13),
         ),
         const SizedBox(height: 8),
@@ -115,8 +121,8 @@ class _DualAudioPlayerState extends State<DualAudioPlayer> {
               const SizedBox(width: 6),
               Text(
                 isPlayingOriginal
-                    ? (isBypassMyEq ? 'กำลังเล่น: ของฉัน (Bypass EQ)' : 'กำลังเล่น: ของฉัน (EQ)')
-                    : 'กำลังเล่น: โจทย์',
+                    ? (isBypassMyEq ? Translations.get('playing_my_eq_bypass', isThai) : Translations.get('playing_my_eq', isThai))
+                    : Translations.get('playing_original', isThai),
                 style: TextStyle(
                   color: isPlayingOriginal ? Colors.orange : Colors.blue,
                   fontSize: 13,
@@ -138,7 +144,7 @@ class _DualAudioPlayerState extends State<DualAudioPlayer> {
                 color: Colors.white,
               ),
               label: Text(
-                isPlayingOriginal ? 'กลับไปฟังโจทย์' : 'ฟังของฉัน',
+                isPlayingOriginal ? Translations.get('btn_back_to_problem', isThai) : Translations.get('btn_listen_mine', isThai),
                 style: const TextStyle(color: Colors.white),
               ),
               style: ElevatedButton.styleFrom(
@@ -163,9 +169,9 @@ class _DualAudioPlayerState extends State<DualAudioPlayer> {
                   isBypassMyEq ? Icons.check_box : Icons.check_box_outline_blank,
                   color: Colors.white,
                 ),
-                label: const Text(
-                  'Bypass EQ',
-                  style: TextStyle(color: Colors.white),
+                label: Text(
+                  Translations.get('btn_bypass_eq', isThai),
+                  style: const TextStyle(color: Colors.white),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isBypassMyEq

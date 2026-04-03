@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
 import '../models/game_state.dart';
+import '../utils/translations.dart';
+import '../widgets/epic_background.dart';
 import 'game_screen.dart';
 
 class SelectScreen extends StatelessWidget {
@@ -9,71 +11,76 @@ class SelectScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final gameProvider = Provider.of<GameProvider>(context);
+    final isThai = gameProvider.isThai;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A2E),
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text(
-          'เลือกประเภทเสียง',
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          Translations.get('select_category_title', isThai),
+          style: const TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.transparent,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'คุณอยากฝึกกับเสียงแบบไหน?',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+      body: EpicBackground(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                Translations.get('select_category_title', isThai),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'เลือก 1 ประเภทเพื่อเริ่มฝึก',
-              style: TextStyle(color: Colors.white54, fontSize: 14),
-            ),
-            const SizedBox(height: 32),
-            _buildSoundCard(
-              context,
-              type: SoundType.vocal,
-              title: 'เสียงร้อง',
-              subtitle: 'ฝึกกับเสียงนักร้อง',
-              icon: Icons.mic,
-              color: Colors.purple,
-            ),
-            const SizedBox(height: 16),
-            _buildSoundCard(
-              context,
-              type: SoundType.music,
-              title: 'เพลง',
-              subtitle: 'ฝึกกับเพลงเต็มๆ',
-              icon: Icons.music_note,
-              color: Colors.blue,
-            ),
-            const SizedBox(height: 16),
-            _buildSoundCard(
-              context,
-              type: SoundType.instrument,
-              title: 'เสียงดนตรี',
-              subtitle: 'ฝึกกับเครื่องดนตรี',
-              icon: Icons.piano,
-              color: Colors.green,
-            ),
-            const SizedBox(height: 16),
-            _buildSoundCard(
-              context,
-              type: SoundType.speech,
-              title: 'เสียงพูด',
-              subtitle: 'ฝึกกับเสียงพูด เหมาะสำหรับสาย Podcast',
-              icon: Icons.record_voice_over,
-              color: Colors.orange,
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                Translations.get('select_subtitle', isThai),
+                style: const TextStyle(color: Colors.white54, fontSize: 14),
+              ),
+              const SizedBox(height: 32),
+              _buildSoundCard(
+                context,
+                type: SoundType.vocal,
+                title: Translations.get('sound_vocal', isThai).split('\n').first,
+                subtitle: Translations.get('sound_vocal', isThai).split('\n').last,
+                icon: Icons.mic,
+                color: Colors.purple,
+              ),
+              const SizedBox(height: 16),
+              _buildSoundCard(
+                context,
+                type: SoundType.music,
+                title: Translations.get('sound_music', isThai).split('\n').first,
+                subtitle: Translations.get('sound_music', isThai).split('\n').last,
+                icon: Icons.music_note,
+                color: Colors.blue,
+              ),
+              const SizedBox(height: 16),
+              _buildSoundCard(
+                context,
+                type: SoundType.instrument,
+                title: Translations.get('sound_instrument', isThai).split('\n').first,
+                subtitle: Translations.get('sound_instrument', isThai).split('\n').last,
+                icon: Icons.piano,
+                color: Colors.green,
+              ),
+              const SizedBox(height: 16),
+              _buildSoundCard(
+                context,
+                type: SoundType.speech,
+                title: Translations.get('sound_speech', isThai).split('\n').first,
+                subtitle: Translations.get('sound_speech', isThai).split('\n').last,
+                icon: Icons.record_voice_over,
+                color: Colors.orange,
+              ),
+            ],
+          ),
         ),
       ),
     );

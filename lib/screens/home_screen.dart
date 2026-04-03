@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
+import '../utils/translations.dart';
 import 'select_screen.dart';
 import 'learn_screen.dart';
+import 'manual_screen.dart';
+import '../widgets/epic_background.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -10,16 +13,37 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gameProvider = Provider.of<GameProvider>(context);
+    final isThai = gameProvider.isThai;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A2E),
-      body: SafeArea(
-        child: Padding(
+      backgroundColor: Colors.transparent, // Background handled by EpicBackground
+      body: EpicBackground(
+        child: SafeArea(
+          child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 40),
+              // Language toggle at the top right
+              Align(
+                alignment: Alignment.topRight,
+                child: InkWell(
+                  onTap: () => gameProvider.toggleLanguage(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.white54),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      isThai ? 'EN' : 'TH',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
 
               // Logo และชื่อแอพ
               const Icon(
@@ -28,17 +52,17 @@ class HomeScreen extends StatelessWidget {
                 color: Colors.orange,
               ),
               const SizedBox(height: 16),
-              const Text(
-                'EQ ฝึกหู',
-                style: TextStyle(
+              Text(
+                Translations.get('app_title', isThai),
+                style: const TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
               ),
-              const Text(
-                'ฝึกทักษะการฟัง EQ',
-                style: TextStyle(
+              Text(
+                Translations.get('app_subtitle', isThai),
+                style: const TextStyle(
                   fontSize: 16,
                   color: Colors.white54,
                 ),
@@ -59,15 +83,15 @@ class HomeScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    const Text(
-                      'คะแนนรวม',
-                      style: TextStyle(
+                    Text(
+                      Translations.get('total_score', isThai),
+                      style: const TextStyle(
                         color: Colors.white54,
                         fontSize: 14,
                       ),
                     ),
                     Text(
-                      '${gameProvider.state.score}',
+                      '${gameProvider.totalLifetimeScore}',
                       style: const TextStyle(
                         color: Colors.orange,
                         fontSize: 48,
@@ -99,12 +123,46 @@ class HomeScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'เริ่มฝึก',
-                    style: TextStyle(
+                  child: Text(
+                    Translations.get('start_training', isThai),
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ปุ่มคู่มือการใช้งาน
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ManualScreen(),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.white.withOpacity(0.05),
+                    side: const BorderSide(color: Colors.greenAccent),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    Translations.get('user_manual_btn', isThai),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.greenAccent,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
@@ -131,9 +189,9 @@ class HomeScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'บทเรียน Frequency',
-                    style: TextStyle(
+                  child: Text(
+                    Translations.get('freq_lesson_btn', isThai),
+                    style: const TextStyle(
                       fontSize: 18,
                       color: Colors.orange,
                     ),
@@ -144,6 +202,7 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+ }
 }

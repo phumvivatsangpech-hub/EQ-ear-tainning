@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
+import '../utils/translations.dart';
+import '../widgets/epic_background.dart';
 
 class ResultScreen extends StatelessWidget {
   const ResultScreen({Key? key}) : super(key: key);
@@ -8,12 +10,14 @@ class ResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gameProvider = Provider.of<GameProvider>(context);
+    final isThai = gameProvider.isThai;
     final score = gameProvider.state.score;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A2E),
-      body: SafeArea(
-        child: Padding(
+      backgroundColor: Colors.transparent,
+      body: EpicBackground(
+        child: SafeArea(
+          child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -30,7 +34,7 @@ class ResultScreen extends StatelessWidget {
 
               // หัวข้อ
               Text(
-                _getTitle(score),
+                _getTitle(score, isThai),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 28,
@@ -41,9 +45,9 @@ class ResultScreen extends StatelessWidget {
 
               const SizedBox(height: 8),
 
-              const Text(
-                'คุณทำครบ 5 Level แล้ว!',
-                style: TextStyle(color: Colors.white54, fontSize: 16),
+              Text(
+                Translations.get('result_completed', isThai),
+                style: const TextStyle(color: Colors.white54, fontSize: 16),
               ),
 
               const SizedBox(height: 40),
@@ -61,9 +65,9 @@ class ResultScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    const Text(
-                      'คะแนนรวม',
-                      style: TextStyle(
+                    Text(
+                      Translations.get('total_score', isThai),
+                      style: const TextStyle(
                         color: Colors.white54,
                         fontSize: 16,
                       ),
@@ -78,7 +82,7 @@ class ResultScreen extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'จาก 500 คะแนน',
+                      Translations.get('out_of_500', isThai),
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.5),
                         fontSize: 14,
@@ -105,9 +109,9 @@ class ResultScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'กลับหน้าหลัก',
-                    style: TextStyle(
+                  child: Text(
+                    Translations.get('back_to_home', isThai),
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -133,9 +137,9 @@ class ResultScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'เล่นอีกครั้ง',
-                    style: TextStyle(
+                  child: Text(
+                    Translations.get('play_again', isThai),
+                    style: const TextStyle(
                       fontSize: 18,
                       color: Colors.orange,
                     ),
@@ -145,14 +149,15 @@ class ResultScreen extends StatelessWidget {
             ],
           ),
         ),
+       ),
       ),
     );
   }
 
-  String _getTitle(int score) {
-    if (score >= 400) return '🏆 ยอดเยี่ยมมาก!';
-    if (score >= 300) return '🎉 ดีมากเลย!';
-    if (score >= 200) return '👍 ไม่เลวเลย!';
-    return '💪 ฝึกต่อไปนะ!';
+  String _getTitle(int score, bool isThai) {
+    if (score >= 400) return Translations.get('result_trophy_1', isThai);
+    if (score >= 300) return Translations.get('result_trophy_2', isThai);
+    if (score >= 200) return Translations.get('result_trophy_3', isThai);
+    return Translations.get('result_trophy_4', isThai);
   }
 }

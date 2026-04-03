@@ -184,14 +184,57 @@ class AudioService extends ChangeNotifier {
   }
 
 
+  SoundHandle? _lessonHandle;
+  AudioSource? _lessonSource;
+
+  Future<void> playLessonTone(double centerFreq) async {
+    if (!_isInit) await init();
+    stopLessonTone();
+
+    try {
+      _lessonSource ??= await _soloud!.loadAsset('assets/audio/music/music_problem_1.mp3');
+      
+      // Apply Bandpass filter
+      if (!_filtersAdded) {
+        _soloud!.addGlobalFilter(FilterType.biquadResonantFilter);
+        _soloud!.addGlobalFilter(FilterType.eqFilter);
+        _filtersAdded = true;
+      }
+      
+      // Turn off EQ filter, Turn on Biquad as Bandpass
+      _soloud!.setFilterParameter(FilterType.eqFilter, 0, 0.0);
+      _soloud!.setFilterParameter(FilterType.biquadResonantFilter, 0, 1.0); // Wet = 1
+      _soloud!.setFilterParameter(FilterType.biquadResonantFilter, 1, 2.0); // 2 = Bandpass
+      _soloud!.setFilterParameter(FilterType.biquadResonantFilter, 2, centerFreq);
+      _soloud!.setFilterParameter(FilterType.biquadResonantFilter, 3, 4.0); // High resonance for isolation
+      
+      _lessonHandle = await _soloud!.play(_lessonSource!, looping: true);
+    } catch (e) {
+      debugPrint("Error playing lesson tone: \$e");
+    }
+  }
+
+  void stopLessonTone() {
+    if (_lessonHandle != null) {
+      _soloud!.stop(_lessonHandle!);
+      _lessonHandle = null;
+    }
+    if (_isInit && _filtersAdded) {
+      _soloud!.setFilterParameter(FilterType.biquadResonantFilter, 0, 0.0);
+    }
+  }
+
   Future<void> disposeAudio() async {
+    stopLessonTone();
     if (_questionHandle != null) _soloud?.stop(_questionHandle!);
     if (_originalHandle != null) _soloud?.stop(_originalHandle!);
     if (_questionSource != null) await _soloud?.disposeSource(_questionSource!);
     if (_originalSource != null) await _soloud?.disposeSource(_originalSource!);
+    if (_lessonSource != null) await _soloud?.disposeSource(_lessonSource!);
     _questionHandle = null;
     _originalHandle = null;
     _questionSource = null;
     _originalSource = null;
+    _lessonSource = null;
   }
 }

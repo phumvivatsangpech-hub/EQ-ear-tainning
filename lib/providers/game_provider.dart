@@ -5,10 +5,14 @@ import '../data/levels.dart';
 
 class GameProvider extends ChangeNotifier {
   GameState _state = GameState();
-  int _highScore = 0; // เก็บคะแนนสูงสุด
+  int _highScore = 0; // เก็บคะแนนสูงสุดของแต่ละหมวดเกม
+  int _totalLifetimeScore = 0; // คะแนนสะสมระยะยาวทั้งหมด
+  bool _isThai = true; // สถานะภาษา (true = ไทย, false = อังกฤษ)
 
   GameState get state => _state;
   int get highScore => _highScore;
+  int get totalLifetimeScore => _totalLifetimeScore;
+  bool get isThai => _isThai;
 
   void selectSound(SoundType type) {
     _state = _state.copyWith(
@@ -23,6 +27,12 @@ class GameProvider extends ChangeNotifier {
     _state = _state.copyWith(
       score: _state.score + points,
     );
+    _totalLifetimeScore += points;
+    notifyListeners();
+  }
+
+  void toggleLanguage() {
+    _isThai = !_isThai;
     notifyListeners();
   }
 
